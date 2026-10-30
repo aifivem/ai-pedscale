@@ -1,6 +1,7 @@
 import {
   AdminWorld,
   cache,
+  every,
   PlayerState,
   TickLoop,
 } from "@aicore-fivem/lib/client";
@@ -68,14 +69,10 @@ function findNear(): void {
   tick.set(near.length > 0);
 }
 
-let finder: ReturnType<typeof setInterval> | null = null;
+const finder = every(500, findNear, { active: false, name: "findNear" });
 new PlayerState(SCALE_STATE, toScale).onChange((serverId, scale) => {
   if (scale) scaled.set(serverId, scale);
   else scaled.delete(serverId);
-  if (scaled.size && !finder) finder = setInterval(findNear, 500);
-  else if (!scaled.size && finder) {
-    clearInterval(finder);
-    finder = null;
-  }
+  finder.set(scaled.size > 0);
   findNear();
 });

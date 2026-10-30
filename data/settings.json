@@ -1,0 +1,10 @@
+{
+  "$schema": "./schemas/settings.schema.json",
+  "heightOn": true,
+  "widthOn": false,
+  "minHeight": 0.85,
+  "maxHeight": 1.1,
+  "minWidth": 0.9,
+  "maxWidth": 1.15,
+  "drawDistance": 100
+}

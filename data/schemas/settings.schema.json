@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-pedscale/data/settings.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    },
+    "heightOn": {
+      "description": "Allow height changes: Off: /setheight is refused (sizes already set stay).",
+      "type": "boolean"
+    },
+    "widthOn": {
+      "description": "Allow width changes: Off: /setwidth is refused and widths are drawn as normal.",
+      "type": "boolean"
+    },
+    "minHeight": {
+      "description": "Smallest: The shortest a character can be made (0.85 = 15 % shorter).",
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1
+    },
+    "maxHeight": {
+      "description": "Largest: The tallest a character can be made (1.1 = 10 % taller).",
+      "type": "number",
+      "minimum": 1,
+      "maximum": 1.5
+    },
+    "minWidth": {
+      "description": "Smallest: The thinnest a character can be made.",
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1
+    },
+    "maxWidth": {
+      "description": "Largest: The widest a character can be made.",
+      "type": "number",
+      "minimum": 1,
+      "maximum": 1.5
+    },
+    "drawDistance": {
+      "description": "Drawn within: Other players' sizes are drawn this close; further away everyone looks normal (saves client time).",
+      "type": "integer",
+      "minimum": 20,
+      "maximum": 300
+    }
+  },
+  "required": []
+}

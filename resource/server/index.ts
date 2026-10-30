@@ -3,42 +3,33 @@ import {
   AdminPanel,
   aiLogChannels,
   notify,
+  onCharacter,
   online,
-  resourceExport,
 } from "@aicore-fivem/lib/server";
 import { createLogger } from "@aicore-fivem/lib/shared";
-import { ADMIN, CORE, type CharacterInfo } from "@aicore-fivem/shared";
+import { ADMIN } from "@aicore-fivem/shared";
 import { Locale, ResourceName } from "common";
 import { PLAIN, readSettings } from "common/scale";
 import { schema } from "./schema";
 import { Sizes } from "./sizes";
 
 const log = createLogger(ResourceName);
-const core = resourceExport("ai-core");
 const panel = new AdminPanel(schema);
-let settings = readSettings(panel.get("settings"));
-panel.onChange(
-  "settings",
-  () => (settings = readSettings(panel.get("settings"))),
-);
+const view = panel.view("settings", readSettings);
 aiLogChannels({ sizes: {} });
 
-const sizes = new Sizes(panel, () => settings);
-on(CORE.playerLoadedEvent, (source: number, character: CharacterInfo) =>
-  sizes.load(source, character),
-);
-on(CORE.playerUnloadedEvent, (source: number) => sizes.unload(source));
-// Characters loaded before this script (re)started.
-for (const source of online.sources()) {
-  const character = core.GetCharacter(source);
-  if (character) sizes.load(source, character);
-}
+const sizes = new Sizes(panel, () => view.value);
+// Also replays the characters loaded before this script (re)started.
+onCharacter({
+  loaded: (source, character) => sizes.load(source, character),
+  unloaded: (source) => sizes.unload(source),
+});
 
 const tell = (source: number, text: string, kind: "success" | "error") =>
   source > 0 ? notify(source, text, kind) : log.info(text);
 
 /** Read once: `restricted` is fixed when a command is registered, so a change applies after a restart. */
-const everyone = settings.commandAccess === "everyone";
+const everyone = view.value.commandAccess === "everyone";
 
 /** Whose size a command changes: the given id or the caller; players who are not admins only their own. */
 function targetOf(source: number, id: number | undefined): number | string {
@@ -77,6 +68,7 @@ addCommand(
   (source, args) => {
     const target = targetOf(source, args.id);
     if (typeof target === "string") return tell(source, target, "error");
+    const settings = view.value;
     if (!settings.heightOn)
       return tell(source, Locale("ERR_HEIGHT_OFF"), "error");
     if (args.value < settings.minHeight || args.value > settings.maxHeight)
@@ -99,6 +91,7 @@ addCommand(
   (source, args) => {
     const target = targetOf(source, args.id);
     if (typeof target === "string") return tell(source, target, "error");
+    const settings = view.value;
     if (!settings.widthOn)
       return tell(source, Locale("ERR_WIDTH_OFF"), "error");
     if (args.value < settings.minWidth || args.value > settings.maxWidth)

@@ -211,7 +211,7 @@ const CORE = {
 	clientPlayerLoadedEvent: "ai-core:client:playerLoaded",
 	clientPlayerUnloadedEvent: "ai-core:client:playerUnloaded",
 	clientCharacterPortraitEvent: "ai-core:client:characterPortrait",
-	clientCharacterLookEvent: "ai-core:client:characterLook",
+	characterLooksEvent: "ai-core:client:characterLooks",
 	clientPromptPressedEvent: "ai-core:client:promptPressed",
 	clientCacheEvent: "ai-core:client:cache",
 	clientHudVisibleEvent: "ai-core:client:hudVisible",
@@ -858,7 +858,45 @@ var OnlinePlayers = class {
 	}
 };
 const EMPTY = new Set(), online = new OnlinePlayers();
-resourceExport(CORE.resource), resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
+resourceExport(CORE.resource), resourceExport(CORE.resource);
+// ../../../packages/lib/src/server/players.ts
+const log$4 = createLogger(GetCurrentResourceName()), dropped = new Set();
+let listening = !1;
+function onDropped(fn) {
+	listening || (listening = !0, on("playerDropped", () => {
+		let source = Number(globalThis.source);
+		for (let handler of dropped) handler(source);
+	})), dropped.add(fn);
+}
+function onCharacter(handlers) {
+	let live = new Map(), deliver = (source, character) => {
+		if (live.set(source, character.id), handlers.loaded) try {
+			let result = handlers.loaded(source, character);
+			result instanceof Promise && result.catch((error) => log$4.error(`character loaded handler failed for ${source}`, error));
+		} catch (error) {
+			log$4.error(`character loaded handler failed for ${source}`, error);
+		}
+	}, end = (source, charId) => {
+		if (live.delete(source)) try {
+			handlers.unloaded?.(source, charId);
+		} catch (error) {
+			log$4.error(`character unloaded handler failed for ${source}`, error);
+		}
+	};
+	on(CORE.playerLoadedEvent, (source, character) => {
+		let previous = live.get(source);
+		previous !== void 0 && end(source, previous), deliver(source, character);
+	}), on(CORE.playerUnloadedEvent, (source, charId) => end(source, charId)), onDropped((source) => setImmediate(() => {
+		let charId = live.get(source);
+		charId !== void 0 && end(source, charId);
+	})), setImmediate(() => {
+		for (let source of online.sources()) {
+			if (live.has(source)) continue;
+			let character = online.character(source);
+			character && deliver(source, character);
+		}
+	});
+}
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName(), log$3 = createLogger(resource);
 let texts = null;
@@ -1008,7 +1046,7 @@ var Mirror = class {
 		Player(source).state.set(this.key, value ?? null, !0), this.put(source, value);
 	}
 };
-resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // resource/common/locale.ts
 const Locale = createLocale(), ResourceName = GetCurrentResourceName();
 IsDuplicityVersion();
@@ -1290,7 +1328,7 @@ const range = (min, max) => ({
 			}]
 		}
 	]
-}, core$1 = resourceExport("ai-core"), scaleState = new PlayerState("aiPedScale", toScale), readForm = (raw) => {
+}, core = resourceExport("ai-core"), scaleState = new PlayerState("aiPedScale", toScale), readForm = (raw) => {
 	let v = isRecord(raw) ? raw : {};
 	return {
 		player: str(v.player, "", 64),
@@ -1314,7 +1352,7 @@ var Sizes = class {
 		return scaleState.get(source) ?? PLAIN;
 	}
 	load(source, character) {
-		this.citizen.set(source, character.citizenid), this.show(source, toScale(core$1.GetMeta(source, "pedScale")) ?? PLAIN);
+		this.citizen.set(source, character.citizenid), this.show(source, toScale(core.GetMeta(source, "pedScale")) ?? PLAIN);
 	}
 	unload(source) {
 		scaleState.set(source, void 0);
@@ -1324,7 +1362,7 @@ var Sizes = class {
 	set(by, source, scale) {
 		this.show(source, scale);
 		let plain = scale.height === 1 && scale.width === 1;
-		core$1.SetMeta(source, "pedScale", plain ? null : scale), aiLog("sizes", "changed a character size", {
+		core.SetMeta(source, "pedScale", plain ? null : scale), aiLog("sizes", "changed a character size", {
 			source: by > 0 ? by : void 0,
 			target: source,
 			metadata: { ...scale }
@@ -1347,7 +1385,7 @@ var Sizes = class {
 		});
 	}
 	sourceOf(citizenid) {
-		return citizenid ? core$1.GetSourceByCitizenId(citizenid) : null;
+		return citizenid ? core.GetSourceByCitizenId(citizenid) : null;
 	}
 	checkForm(form) {
 		if (!form.player || form.player !== this.formPlayer) return null;
@@ -1382,16 +1420,14 @@ var Sizes = class {
 	}
 };
 // resource/server/index.ts
-const log = createLogger(ResourceName), core = resourceExport("ai-core"), panel = new AdminPanel(schema);
-let settings = readSettings(panel.get("settings"));
-panel.onChange("settings", () => settings = readSettings(panel.get("settings"))), aiLogChannels({ sizes: {} });
-const sizes = new Sizes(panel, () => settings);
-on(CORE.playerLoadedEvent, (source, character) => sizes.load(source, character)), on(CORE.playerUnloadedEvent, (source) => sizes.unload(source));
-for (let source of online.sources()) {
-	let character = core.GetCharacter(source);
-	character && sizes.load(source, character);
-}
-const tell = (source, text, kind) => source > 0 ? notify(source, text, kind) : log.info(text), everyone = settings.commandAccess === "everyone";
+const log = createLogger(ResourceName), panel = new AdminPanel(schema), view = panel.view("settings", readSettings);
+aiLogChannels({ sizes: {} });
+const sizes = new Sizes(panel, () => view.value);
+onCharacter({
+	loaded: (source, character) => sizes.load(source, character),
+	unloaded: (source) => sizes.unload(source)
+});
+const tell = (source, text, kind) => source > 0 ? notify(source, text, kind) : log.info(text), everyone = view.value.commandAccess === "everyone";
 function targetOf(source, id) {
 	let target = id ?? source;
 	return target <= 0 ? Locale("ERR_PLAYER_ONLY") : everyone && target !== source && source > 0 && !IsPlayerAceAllowed(String(source), ADMIN.ace) ? Locale("ERR_OWN_ONLY") : online.character(target) ? target : Locale("ERR_OFFLINE");
@@ -1413,6 +1449,7 @@ addCommand("setheight", {
 }, (source, args) => {
 	let target = targetOf(source, args.id);
 	if (typeof target == "string") return tell(source, target, "error");
+	let settings = view.value;
 	if (!settings.heightOn) return tell(source, Locale("ERR_HEIGHT_OFF"), "error");
 	if (args.value < settings.minHeight || args.value > settings.maxHeight) return tell(source, Locale("ERR_RANGE", settings.minHeight, settings.maxHeight), "error");
 	sizes.set(source, target, {
@@ -1426,6 +1463,7 @@ addCommand("setheight", {
 }, (source, args) => {
 	let target = targetOf(source, args.id);
 	if (typeof target == "string") return tell(source, target, "error");
+	let settings = view.value;
 	if (!settings.widthOn) return tell(source, Locale("ERR_WIDTH_OFF"), "error");
 	if (args.value < settings.minWidth || args.value > settings.maxWidth) return tell(source, Locale("ERR_RANGE", settings.minWidth, settings.maxWidth), "error");
 	sizes.set(source, target, {

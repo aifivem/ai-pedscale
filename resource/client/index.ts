@@ -7,11 +7,7 @@ import {
 import { readSettings, SCALE_STATE, toScale, type Scale } from "common/scale";
 
 const world = new AdminWorld(["settings"]);
-let settings = readSettings(world.get("settings"));
-world.onChange(
-  "settings",
-  () => (settings = readSettings(world.get("settings"))),
-);
+const view = world.view("settings", readSettings);
 
 const scaled = new Map<number, Scale>();
 const len = (v: number[]) => Math.hypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0) || 1;
@@ -23,7 +19,7 @@ const len = (v: number[]) => Math.hypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0) || 1;
 function draw(ped: number, s: Scale): void {
   if (IsPedInAnyVehicle(ped, false)) return;
   const [f, r, u, p] = GetEntityMatrix(ped);
-  const width = settings.widthOn ? s.height * s.width : s.height;
+  const width = view.value.widthOn ? s.height * s.width : s.height;
   const fk = width / len(f);
   const rk = width / len(r);
   const uk = s.height / len(u);
@@ -31,8 +27,6 @@ function draw(ped: number, s: Scale): void {
   const dz =
     (still ? GetEntityHeightAboveGround(ped) : GetEntityUprightValue(ped)) -
     s.height;
-  // Looking around makes the matrix flicker.
-  TaskLookAtEntity(ped, ped, 1, 2048, 3);
   SetEntityMatrix(
     ped,
     (f[0] ?? 0) * fk,
@@ -56,6 +50,9 @@ const tick = new TickLoop(() => {
   for (const { ped, scale } of near) if (DoesEntityExist(ped)) draw(ped, scale);
 });
 
+/** How long one look-at task holds; renewed by every search (twice a second), so it never runs out while scaled. */
+const LOOK_MS = 1000;
+
 function findNear(): void {
   near.length = 0;
   const [x = 0, y = 0, z = 0] = GetEntityCoords(cache.ped, false);
@@ -63,8 +60,10 @@ function findNear(): void {
     const ped = GetPlayerPed(GetPlayerFromServerId(serverId));
     if (!ped || !DoesEntityExist(ped)) continue;
     const [px = 0, py = 0, pz = 0] = GetEntityCoords(ped, false);
-    if (Math.hypot(px - x, py - y, pz - z) < settings.drawDistance)
-      near.push({ ped, scale });
+    if (Math.hypot(px - x, py - y, pz - z) >= view.value.drawDistance) continue;
+    near.push({ ped, scale });
+    // Looking around makes the matrix flicker; only the own ped takes the task (remote peds ignore it).
+    if (ped === cache.ped) TaskLookAtEntity(ped, ped, LOOK_MS, 2048, 3);
   }
   tick.set(near.length > 0);
 }

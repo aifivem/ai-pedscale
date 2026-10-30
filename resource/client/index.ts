@@ -50,19 +50,33 @@ function draw(ped: number, s: Scale): void {
   );
 }
 
+/** Scaled peds within the draw distance, found twice a second; the frame loop runs only while there are any. */
+const near: Array<{ ped: number; scale: Scale }> = [];
 const tick = new TickLoop(() => {
+  for (const { ped, scale } of near) if (DoesEntityExist(ped)) draw(ped, scale);
+});
+
+function findNear(): void {
+  near.length = 0;
   const [x = 0, y = 0, z = 0] = GetEntityCoords(cache.ped, false);
-  for (const [serverId, s] of scaled) {
+  for (const [serverId, scale] of scaled) {
     const ped = GetPlayerPed(GetPlayerFromServerId(serverId));
     if (!ped || !DoesEntityExist(ped)) continue;
     const [px = 0, py = 0, pz = 0] = GetEntityCoords(ped, false);
     if (Math.hypot(px - x, py - y, pz - z) < settings.drawDistance)
-      draw(ped, s);
+      near.push({ ped, scale });
   }
-});
+  tick.set(near.length > 0);
+}
 
+let finder: ReturnType<typeof setInterval> | null = null;
 new PlayerState(SCALE_STATE, toScale).onChange((serverId, scale) => {
   if (scale) scaled.set(serverId, scale);
   else scaled.delete(serverId);
-  tick.set(scaled.size > 0);
+  if (scaled.size && !finder) finder = setInterval(findNear, 500);
+  else if (!scaled.size && finder) {
+    clearInterval(finder);
+    finder = null;
+  }
+  findNear();
 });

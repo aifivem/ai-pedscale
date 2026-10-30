@@ -1,6 +1,7 @@
 import {
   aiLog,
   online,
+  type AdminPanel,
   PlayerState,
   resourceExport,
 } from "@aicore-fivem/lib/server";
@@ -14,7 +15,6 @@ import {
   type Scale,
   type Settings,
 } from "common/scale";
-import type { Panel } from "./panel";
 
 const core = resourceExport("ai-core");
 const scaleState = new PlayerState(SCALE_STATE, toScale);
@@ -45,7 +45,7 @@ export class Sizes {
   private formPlayer = "";
 
   constructor(
-    private readonly panel: Panel,
+    private readonly panel: AdminPanel,
     private readonly settings: () => Settings,
   ) {
     panel.commit("edit", undefined, { player: "", height: 1, width: 1 });

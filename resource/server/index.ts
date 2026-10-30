@@ -1,5 +1,6 @@
 import {
   addCommand,
+  AdminPanel,
   aiLogChannels,
   notify,
   online,
@@ -9,13 +10,12 @@ import { createLogger } from "@aicore-fivem/lib/shared";
 import { ADMIN, CORE, type CharacterInfo } from "@aicore-fivem/shared";
 import { Locale, ResourceName } from "common";
 import { PLAIN, readSettings } from "common/scale";
-import { Panel } from "./panel";
 import { schema } from "./schema";
 import { Sizes } from "./sizes";
 
 const log = createLogger(ResourceName);
 const core = resourceExport("ai-core");
-const panel = new Panel(schema);
+const panel = new AdminPanel(schema);
 let settings = readSettings(panel.get("settings"));
 panel.onChange(
   "settings",

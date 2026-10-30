@@ -93,13 +93,10 @@ export class Sizes {
     const plain = scale.height === 1 && scale.width === 1;
     scaleState.set(source, plain ? undefined : scale);
     const citizenid = this.citizen.get(source);
-    const c = online.character(source);
     if (citizenid)
       this.panel.commit("players", citizenid, {
         id: source,
-        name: c
-          ? `${c.firstname} ${c.lastname}`
-          : GetPlayerName(String(source)),
+        name: online.name(source),
         height: scale.height,
         width: scale.width,
       });

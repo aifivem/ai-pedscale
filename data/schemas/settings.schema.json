@@ -44,6 +44,13 @@
       "type": "integer",
       "minimum": 20,
       "maximum": 300
+    },
+    "commandAccess": {
+      "description": "Who may use them: Everyone: each player changes only their own size, admins anyone's. Applies after the script restarts.",
+      "enum": [
+        "admins",
+        "everyone"
+      ]
     }
   },
   "required": []

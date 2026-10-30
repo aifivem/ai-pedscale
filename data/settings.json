@@ -6,5 +6,6 @@
   "maxHeight": 1.1,
   "minWidth": 0.9,
   "maxWidth": 1.15,
-  "drawDistance": 100
+  "drawDistance": 100,
+  "commandAccess": "admins"
 }

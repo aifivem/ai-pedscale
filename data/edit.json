@@ -1,0 +1,6 @@
+{
+  "$schema": "./schemas/edit.schema.json",
+  "player": "",
+  "height": 1,
+  "width": 1
+}

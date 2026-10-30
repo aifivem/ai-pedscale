@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-pedscale/data/edit.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    },
+    "player": {
+      "description": "Player: Players online when the panel opened; reopen the panel for players who joined since.",
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 64
+    },
+    "height": {
+      "description": "Height: 1 = normal height.",
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1.5
+    },
+    "width": {
+      "description": "Width: 1 = normal width; only drawn while width changes are allowed.",
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1.5
+    }
+  },
+  "required": []
+}

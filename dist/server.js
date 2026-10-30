@@ -37,6 +37,9 @@ function num(value, fallback, min = -Infinity, max = Infinity) {
 function bool(value, fallback) {
 	return typeof value == "boolean" ? value : fallback;
 }
+function str(value, fallback, max = 64) {
+	return typeof value == "string" && value.trim() ? value.trim().slice(0, max) : fallback;
+}
 function record(value) {
 	return typeof value == "object" && value && !Array.isArray(value) ? value : {};
 }
@@ -278,7 +281,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$8 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$10 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -292,7 +295,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$8.GetLookupValues(source);
+			list = core$10.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -494,7 +497,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$7 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
+const core$9 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
 function imported(spec, value) {
 	let base = clone(spec.newRecord ?? {}), out = {};
 	for (let name of Object.keys(spec.sections)) {
@@ -515,7 +518,7 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$7.RegisterAdminPanel(this.resource));
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$9.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -608,7 +611,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$7.AdminPanelChanged({
+		if (core$9.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -629,6 +632,13 @@ var AdminPanel = class {
 		this.data.set(name, data), (filled || raw === null || !file.hasSchemaRef()) && file.write(data);
 	}
 };
+// ../../../packages/lib/src/server/log.ts
+function aiLog(channel, message, options) {
+	optionalExport("ai-core")?.Log(channel, message, options);
+}
+function aiLogChannels(channels) {
+	optionalExport("ai-core")?.LogChannels(channels);
+}
 // ../../../packages/lib/src/server/notify.ts
 function notify(source, text, kind = "info", duration) {
 	let notification = {
@@ -640,7 +650,7 @@ function notify(source, text, kind = "info", duration) {
 }
 resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/online.ts
-const core$5 = resourceExport(CORE.resource);
+const core$7 = resourceExport(CORE.resource);
 var OnlinePlayers = class {
 	players = new Map();
 	onDuty = new Map();
@@ -649,7 +659,7 @@ var OnlinePlayers = class {
 		if (this.started) return;
 		this.started = !0;
 		let load = (source, character) => {
-			this.put(source, character, (core$5.GetJobs(source) ?? []).map((m) => m.job), (core$5.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$5.GetDutyJob(source));
+			this.put(source, character, (core$7.GetJobs(source) ?? []).map((m) => m.job), (core$7.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$7.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => {
 			let player = this.players.get(source);
@@ -658,8 +668,8 @@ var OnlinePlayers = class {
 			let player = this.players.get(source);
 			player && (player.gangs = gangs.map((m) => m.gang));
 		}), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$5.GetLoadedSources()) {
-			let character = core$5.GetCharacter(source);
+		for (let source of core$7.GetLoadedSources()) {
+			let character = core$7.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -702,8 +712,8 @@ var OnlinePlayers = class {
 		return this.start(), this.onDuty.get(job) ?? EMPTY;
 	}
 };
-const EMPTY = new Set();
-new OnlinePlayers(), resourceExport(CORE.resource), resourceExport(CORE.resource);
+const EMPTY = new Set(), online = new OnlinePlayers();
+resourceExport(CORE.resource), resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName(), log$3 = createLogger(resource);
 let texts = null;
@@ -853,12 +863,15 @@ var Mirror = class {
 		Player(source).state.set(this.key, value ?? null, !0), this.put(source, value);
 	}
 };
-resourceExport(CORE.resource), resourceExport(CORE.resource);
+resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // resource/common/locale.ts
 const Locale = createLocale(), ResourceName = GetCurrentResourceName();
 IsDuplicityVersion();
 // resource/common/scale.ts
-const SCALE_META = "pedScale", toScale = (v) => {
+const PLAIN = {
+	height: 1,
+	width: 1
+}, toScale = (v) => {
 	let r = record(v);
 	return typeof r.height == "number" && typeof r.width == "number" ? {
 		height: r.height,
@@ -874,9 +887,22 @@ function readSettings(raw) {
 		maxHeight: num(s.maxHeight, 1.1, 1, 1.5),
 		minWidth: num(s.minWidth, .9, .5, 1),
 		maxWidth: num(s.maxWidth, 1.15, 1, 1.5),
-		drawDistance: num(s.drawDistance, 100, 20, 300)
+		drawDistance: num(s.drawDistance, 100, 20, 300),
+		commandAccess: s.commandAccess === "everyone" ? "everyone" : "admins"
 	};
 }
+// resource/server/panel.ts
+var Panel = class extends AdminPanel {
+	editor = 0;
+	apply(admin, raw) {
+		this.editor = admin;
+		try {
+			return super.apply(admin, raw);
+		} finally {
+			this.editor = 0;
+		}
+	}
+};
 // resource/server/schema.ts
 const range = (min, max) => ({
 	type: "number",
@@ -885,182 +911,400 @@ const range = (min, max) => ({
 }), schema = {
 	title: "ADMIN_TITLE",
 	icon: "user",
-	files: { settings: {
-		kind: "settings",
-		sync: "all",
-		sections: {
-			heightOn: { type: "bool" },
-			widthOn: { type: "bool" },
-			minHeight: range(.5, 1),
-			maxHeight: range(1, 1.5),
-			minWidth: range(.5, 1),
-			maxWidth: range(1, 1.5),
-			drawDistance: {
-				type: "number",
-				min: 20,
-				max: 300,
-				integer: !0
+	files: {
+		settings: {
+			kind: "settings",
+			sync: "all",
+			sections: {
+				heightOn: { type: "bool" },
+				widthOn: { type: "bool" },
+				minHeight: range(.5, 1),
+				maxHeight: range(1, 1.5),
+				minWidth: range(.5, 1),
+				maxWidth: range(1, 1.5),
+				drawDistance: {
+					type: "number",
+					min: 20,
+					max: 300,
+					integer: !0
+				},
+				commandAccess: {
+					type: "enum",
+					values: ["admins", "everyone"]
+				}
+			},
+			defaults: {
+				commandAccess: "admins",
+				heightOn: !0,
+				widthOn: !1,
+				minHeight: .85,
+				maxHeight: 1.1,
+				minWidth: .9,
+				maxWidth: 1.15,
+				drawDistance: 100
 			}
 		},
-		defaults: {
-			heightOn: !0,
-			widthOn: !1,
-			minHeight: .85,
-			maxHeight: 1.1,
-			minWidth: .9,
-			maxWidth: 1.15,
-			drawDistance: 100
+		players: {
+			kind: "records",
+			sync: "admin",
+			memory: !0,
+			sections: {}
+		},
+		edit: {
+			kind: "settings",
+			sync: "admin",
+			sections: {
+				player: {
+					type: "text",
+					min: 0,
+					max: 64,
+					lookup: "player"
+				},
+				height: range(.5, 1.5),
+				width: range(.5, 1.5)
+			},
+			defaults: {
+				player: "",
+				height: 1,
+				width: 1
+			}
 		}
-	} },
-	tabs: [{
-		id: "settings",
-		file: "settings",
-		icon: "user",
-		label: "ADMIN_TAB",
-		desc: "ADMIN_TAB_DESC",
-		cards: [
-			{
-				icon: "triangle-exclamation",
-				title: "ADMIN_C_LIMITS",
-				desc: "ADMIN_C_LIMITS_DESC",
-				fields: []
-			},
-			{
-				icon: "user",
-				title: "ADMIN_C_HEIGHT",
-				desc: "ADMIN_C_HEIGHT_DESC",
-				fields: [
+	},
+	tabs: [
+		{
+			id: "settings",
+			file: "settings",
+			icon: "user",
+			label: "ADMIN_TAB",
+			desc: "ADMIN_TAB_DESC",
+			cards: [
+				{
+					icon: "terminal",
+					title: "ADMIN_C_COMMANDS",
+					desc: "ADMIN_C_COMMANDS_DESC",
+					fields: [{
+						widget: "select",
+						path: "commandAccess",
+						label: "ADMIN_F_ACCESS",
+						hint: "ADMIN_H_ACCESS",
+						options: [{
+							value: "admins",
+							label: "ADMIN_O_ADMINS"
+						}, {
+							value: "everyone",
+							label: "ADMIN_O_EVERYONE"
+						}]
+					}]
+				},
+				{
+					icon: "triangle-exclamation",
+					title: "ADMIN_C_LIMITS",
+					desc: "ADMIN_C_LIMITS_DESC",
+					fields: []
+				},
+				{
+					icon: "user",
+					title: "ADMIN_C_HEIGHT",
+					desc: "ADMIN_C_HEIGHT_DESC",
+					fields: [
+						{
+							widget: "switch",
+							path: "heightOn",
+							label: "ADMIN_F_HEIGHT_ON",
+							hint: "ADMIN_H_HEIGHT_ON"
+						},
+						{
+							widget: "number",
+							path: "minHeight",
+							label: "ADMIN_F_MIN",
+							hint: "ADMIN_H_MIN_HEIGHT",
+							min: .5,
+							max: 1,
+							step: .01,
+							unit: "x"
+						},
+						{
+							widget: "number",
+							path: "maxHeight",
+							label: "ADMIN_F_MAX",
+							hint: "ADMIN_H_MAX_HEIGHT",
+							min: 1,
+							max: 1.5,
+							step: .01,
+							unit: "x"
+						}
+					]
+				},
+				{
+					icon: "user",
+					title: "ADMIN_C_WIDTH",
+					desc: "ADMIN_C_WIDTH_DESC",
+					fields: [
+						{
+							widget: "switch",
+							path: "widthOn",
+							label: "ADMIN_F_WIDTH_ON",
+							hint: "ADMIN_H_WIDTH_ON"
+						},
+						{
+							widget: "number",
+							path: "minWidth",
+							label: "ADMIN_F_MIN",
+							hint: "ADMIN_H_MIN_WIDTH",
+							min: .5,
+							max: 1,
+							step: .01,
+							unit: "x"
+						},
+						{
+							widget: "number",
+							path: "maxWidth",
+							label: "ADMIN_F_MAX",
+							hint: "ADMIN_H_MAX_WIDTH",
+							min: 1,
+							max: 1.5,
+							step: .01,
+							unit: "x"
+						},
+						{
+							widget: "number",
+							path: "drawDistance",
+							label: "ADMIN_F_DISTANCE",
+							hint: "ADMIN_H_DISTANCE",
+							min: 20,
+							max: 300,
+							step: 10,
+							unit: "m"
+						}
+					]
+				}
+			]
+		},
+		{
+			id: "players",
+			file: "players",
+			icon: "users",
+			label: "ADMIN_TAB_PLAYERS",
+			desc: "ADMIN_TAB_PLAYERS_DESC",
+			cards: [],
+			table: {
+				sort: "name",
+				columns: [
 					{
-						widget: "switch",
-						path: "heightOn",
-						label: "ADMIN_F_HEIGHT_ON",
-						hint: "ADMIN_H_HEIGHT_ON"
+						path: "id",
+						label: "ADMIN_COL_ID",
+						width: .6,
+						mono: !0
 					},
 					{
-						widget: "number",
-						path: "minHeight",
-						label: "ADMIN_F_MIN",
-						hint: "ADMIN_H_MIN_HEIGHT",
-						min: .5,
-						max: 1,
-						step: .01,
-						unit: "x"
+						path: "name",
+						label: "ADMIN_COL_NAME",
+						width: 2
 					},
 					{
-						widget: "number",
-						path: "maxHeight",
-						label: "ADMIN_F_MAX",
-						hint: "ADMIN_H_MAX_HEIGHT",
-						min: 1,
-						max: 1.5,
-						step: .01,
-						unit: "x"
-					}
-				]
-			},
-			{
-				icon: "user",
-				title: "ADMIN_C_WIDTH",
-				desc: "ADMIN_C_WIDTH_DESC",
-				fields: [
-					{
-						widget: "switch",
-						path: "widthOn",
-						label: "ADMIN_F_WIDTH_ON",
-						hint: "ADMIN_H_WIDTH_ON"
+						path: "height",
+						label: "ADMIN_COL_HEIGHT",
+						mono: !0
 					},
 					{
-						widget: "number",
-						path: "minWidth",
-						label: "ADMIN_F_MIN",
-						hint: "ADMIN_H_MIN_WIDTH",
-						min: .5,
-						max: 1,
-						step: .01,
-						unit: "x"
-					},
-					{
-						widget: "number",
-						path: "maxWidth",
-						label: "ADMIN_F_MAX",
-						hint: "ADMIN_H_MAX_WIDTH",
-						min: 1,
-						max: 1.5,
-						step: .01,
-						unit: "x"
-					},
-					{
-						widget: "number",
-						path: "drawDistance",
-						label: "ADMIN_F_DISTANCE",
-						hint: "ADMIN_H_DISTANCE",
-						min: 20,
-						max: 300,
-						step: 10,
-						unit: "m"
+						path: "width",
+						label: "ADMIN_COL_WIDTH",
+						mono: !0
 					}
 				]
 			}
-		]
-	}]
-}, log = createLogger(ResourceName), core = resourceExport("ai-core"), panel = new AdminPanel(schema);
+		},
+		{
+			id: "edit",
+			file: "edit",
+			icon: "user",
+			label: "ADMIN_TAB_EDIT",
+			desc: "ADMIN_TAB_EDIT_DESC",
+			cards: [{
+				icon: "user",
+				title: "ADMIN_C_EDIT",
+				desc: "ADMIN_C_EDIT_DESC",
+				fields: [
+					{
+						widget: "text",
+						path: "player",
+						lookup: "player",
+						label: "ADMIN_F_PLAYER",
+						hint: "ADMIN_H_PLAYER",
+						placeholder: "ADMIN_P_PLAYER"
+					},
+					{
+						widget: "number",
+						path: "height",
+						label: "ADMIN_F_HEIGHT",
+						hint: "ADMIN_H_HEIGHT",
+						min: .5,
+						max: 1.5,
+						step: .01,
+						unit: "x"
+					},
+					{
+						widget: "number",
+						path: "width",
+						label: "ADMIN_F_WIDTH",
+						hint: "ADMIN_H_WIDTH",
+						min: .5,
+						max: 1.5,
+						step: .01,
+						unit: "x"
+					}
+				]
+			}]
+		}
+	]
+}, core$1 = resourceExport("ai-core"), scaleState = new PlayerState("aiPedScale", toScale), readForm = (raw) => {
+	let v = isRecord(raw) ? raw : {};
+	return {
+		player: str(v.player, "", 64),
+		height: num(v.height, 1, .5, 1.5),
+		width: num(v.width, 1, .5, 1.5)
+	};
+};
+var Sizes = class {
+	panel;
+	settings;
+	citizen = new Map();
+	formPlayer = "";
+	constructor(panel, settings) {
+		this.panel = panel, this.settings = settings, panel.commit("edit", void 0, {
+			player: "",
+			height: 1,
+			width: 1
+		}), panel.onChange("edit", () => this.formEdited()), panel.rule("edit", (_key, next) => this.checkForm(readForm(next)));
+	}
+	get(source) {
+		return scaleState.get(source) ?? PLAIN;
+	}
+	load(source, character) {
+		this.citizen.set(source, character.citizenid), this.show(source, toScale(core$1.GetMeta(source, "pedScale")) ?? PLAIN);
+	}
+	unload(source) {
+		scaleState.set(source, void 0);
+		let citizenid = this.citizen.get(source);
+		this.citizen.delete(source), citizenid && this.panel.commit("players", citizenid, null);
+	}
+	set(by, source, scale) {
+		this.show(source, scale);
+		let plain = scale.height === 1 && scale.width === 1;
+		core$1.SetMeta(source, "pedScale", plain ? null : scale), aiLog("sizes", "changed a character size", {
+			source: by > 0 ? by : void 0,
+			target: source,
+			metadata: { ...scale }
+		});
+		let form = readForm(this.panel.get("edit"));
+		form.player === this.citizen.get(source) && (form.height !== scale.height || form.width !== scale.width) && this.panel.commit("edit", void 0, {
+			...form,
+			...scale
+		});
+	}
+	show(source, scale) {
+		let plain = scale.height === 1 && scale.width === 1;
+		scaleState.set(source, plain ? void 0 : scale);
+		let citizenid = this.citizen.get(source), c = online.character(source);
+		citizenid && this.panel.commit("players", citizenid, {
+			id: source,
+			name: c ? `${c.firstname} ${c.lastname}` : GetPlayerName(String(source)),
+			height: scale.height,
+			width: scale.width
+		});
+	}
+	sourceOf(citizenid) {
+		return citizenid ? core$1.GetSourceByCitizenId(citizenid) : null;
+	}
+	checkForm(form) {
+		if (!form.player || form.player !== this.formPlayer) return null;
+		let source = this.sourceOf(form.player);
+		if (source === null) return "ERR_OFFLINE";
+		let current = this.get(source), s = this.settings();
+		if (form.height !== current.height) {
+			if (!s.heightOn) return "ERR_HEIGHT_OFF";
+			if (form.height < s.minHeight || form.height > s.maxHeight) return "ADMIN_ERR_LIMITS";
+		}
+		if (form.width !== current.width) {
+			if (!s.widthOn) return "ERR_WIDTH_OFF";
+			if (form.width < s.minWidth || form.width > s.maxWidth) return "ADMIN_ERR_LIMITS";
+		}
+		return null;
+	}
+	formEdited() {
+		let admin = this.panel.editor;
+		if (admin === 0) return;
+		let form = readForm(this.panel.get("edit")), source = this.sourceOf(form.player);
+		if (form.player !== this.formPlayer) {
+			this.formPlayer = form.player;
+			let scale = source === null ? PLAIN : this.get(source);
+			setImmediate(() => this.panel.commit("edit", void 0, {
+				...form,
+				...scale
+			}));
+		} else source !== null && this.set(admin, source, {
+			height: form.height,
+			width: form.width
+		});
+	}
+};
+// resource/server/index.ts
+const log = createLogger(ResourceName), core = resourceExport("ai-core"), panel = new Panel(schema);
 let settings = readSettings(panel.get("settings"));
-panel.onChange("settings", () => settings = readSettings(panel.get("settings")));
-const scaleState = new PlayerState("aiPedScale", toScale);
-function apply(source, scale, save) {
-	let plain = scale.height === 1 && scale.width === 1;
-	scaleState.set(source, plain ? void 0 : scale), save && core.SetMeta(source, SCALE_META, plain ? null : scale);
+panel.onChange("settings", () => settings = readSettings(panel.get("settings"))), aiLogChannels({ sizes: {} });
+const sizes = new Sizes(panel, () => settings);
+on(CORE.playerLoadedEvent, (source, character) => sizes.load(source, character)), on(CORE.playerUnloadedEvent, (source) => sizes.unload(source));
+for (let source of online.sources()) {
+	let character = core.GetCharacter(source);
+	character && sizes.load(source, character);
 }
-on(CORE.playerLoadedEvent, (source) => {
-	let saved = toScale(core.GetMeta(source, SCALE_META));
-	saved && apply(source, saved, !1);
-}), on(CORE.playerUnloadedEvent, (source) => scaleState.set(source, void 0));
-const tell = (source, text, kind) => source > 0 ? notify(source, text, kind) : log.info(text), target = {
-	name: "id",
-	type: "playerId",
-	help: Locale("COMMAND_P_ID")
-}, value = {
+const tell = (source, text, kind) => source > 0 ? notify(source, text, kind) : log.info(text), everyone = settings.commandAccess === "everyone";
+function targetOf(source, id) {
+	let target = id ?? source;
+	return target <= 0 ? Locale("ERR_PLAYER_ONLY") : everyone && target !== source && source > 0 && !IsPlayerAceAllowed(String(source), ADMIN.ace) ? Locale("ERR_OWN_ONLY") : online.character(target) ? target : Locale("ERR_OFFLINE");
+}
+const value = {
 	name: "value",
 	type: "number",
 	help: Locale("COMMAND_P_VALUE")
+}, id = {
+	name: "id",
+	type: "playerId",
+	help: Locale("COMMAND_P_ID"),
+	optional: !0
 };
 addCommand("setheight", {
 	help: Locale("COMMAND_HEIGHT"),
-	params: [target, value],
-	restricted: !0
+	params: [value, id],
+	restricted: !everyone
 }, (source, args) => {
+	let target = targetOf(source, args.id);
+	if (typeof target == "string") return tell(source, target, "error");
 	if (!settings.heightOn) return tell(source, Locale("ERR_HEIGHT_OFF"), "error");
 	if (args.value < settings.minHeight || args.value > settings.maxHeight) return tell(source, Locale("ERR_RANGE", settings.minHeight, settings.maxHeight), "error");
-	let current = scaleState.get(args.id) ?? {
-		height: 1,
-		width: 1
-	};
-	apply(args.id, {
-		...current,
+	sizes.set(source, target, {
+		...sizes.get(target),
 		height: args.value
-	}, !0), tell(source, Locale("NOTIFY_HEIGHT", args.value), "success");
+	}), tell(source, Locale("NOTIFY_HEIGHT", args.value), "success");
 }), addCommand("setwidth", {
 	help: Locale("COMMAND_WIDTH"),
-	params: [target, value],
-	restricted: !0
+	params: [value, id],
+	restricted: !everyone
 }, (source, args) => {
+	let target = targetOf(source, args.id);
+	if (typeof target == "string") return tell(source, target, "error");
 	if (!settings.widthOn) return tell(source, Locale("ERR_WIDTH_OFF"), "error");
 	if (args.value < settings.minWidth || args.value > settings.maxWidth) return tell(source, Locale("ERR_RANGE", settings.minWidth, settings.maxWidth), "error");
-	let current = scaleState.get(args.id) ?? {
-		height: 1,
-		width: 1
-	};
-	apply(args.id, {
-		...current,
+	sizes.set(source, target, {
+		...sizes.get(target),
 		width: args.value
-	}, !0), tell(source, Locale("NOTIFY_WIDTH", args.value), "success");
+	}), tell(source, Locale("NOTIFY_WIDTH", args.value), "success");
 }), addCommand("resetscale", {
 	help: Locale("COMMAND_RESET"),
-	params: [target],
-	restricted: !0
+	params: [id],
+	restricted: !everyone
 }, (source, args) => {
-	apply(args.id, {
-		height: 1,
-		width: 1
-	}, !0), tell(source, Locale("NOTIFY_RESET"), "success");
+	let target = targetOf(source, args.id);
+	if (typeof target == "string") return tell(source, target, "error");
+	sizes.set(source, target, PLAIN), tell(source, Locale("NOTIFY_RESET"), "success");
 });

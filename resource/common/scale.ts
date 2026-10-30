@@ -1,5 +1,7 @@
 import { bool, num, record } from "@aicore-fivem/lib/shared";
 
+export const PLAIN: Scale = { height: 1, width: 1 };
+
 /** Player state: `{ height, width }` of a scaled character (absent at 1 x 1); every client draws it. */
 export const SCALE_STATE = "aiPedScale";
 /** ai-core character metadata key the scale is kept under. */
@@ -26,6 +28,8 @@ export interface Settings {
   maxWidth: number;
   /** Metres within which other players' scale is drawn. */
   drawDistance: number;
+  /** Who may use the size commands (read at start): everyone changes only their own size, admins anyone's. */
+  commandAccess: "admins" | "everyone";
 }
 
 export function readSettings(raw: unknown): Settings {
@@ -38,5 +42,6 @@ export function readSettings(raw: unknown): Settings {
     minWidth: num(s.minWidth, 0.9, 0.5, 1),
     maxWidth: num(s.maxWidth, 1.15, 1, 1.5),
     drawDistance: num(s.drawDistance, 100, 20, 300),
+    commandAccess: s.commandAccess === "everyone" ? "everyone" : "admins",
   };
 }

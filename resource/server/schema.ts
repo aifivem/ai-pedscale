@@ -22,8 +22,10 @@ export const schema: PanelSchema = {
         minWidth: range(0.5, 1),
         maxWidth: range(1, 1.5),
         drawDistance: { type: "number", min: 20, max: 300, integer: true },
+        commandAccess: { type: "enum", values: ["admins", "everyone"] },
       },
       defaults: {
+        commandAccess: "admins",
         heightOn: true,
         widthOn: false,
         minHeight: 0.85,
@@ -32,6 +34,19 @@ export const schema: PanelSchema = {
         maxWidth: 1.15,
         drawDistance: 100,
       },
+    },
+    /** Everyone online with their size (filled by the script, never saved). */
+    players: { kind: "records", sync: "admin", memory: true, sections: {} },
+    /** The "Change a size" form: picking a player loads their size, a changed number applies at once. */
+    edit: {
+      kind: "settings",
+      sync: "admin",
+      sections: {
+        player: { type: "text", min: 0, max: 64, lookup: "player" },
+        height: range(0.5, 1.5),
+        width: range(0.5, 1.5),
+      },
+      defaults: { player: "", height: 1, width: 1 },
     },
   },
   tabs: [
@@ -42,6 +57,23 @@ export const schema: PanelSchema = {
       label: "ADMIN_TAB",
       desc: "ADMIN_TAB_DESC",
       cards: [
+        {
+          icon: "terminal",
+          title: "ADMIN_C_COMMANDS",
+          desc: "ADMIN_C_COMMANDS_DESC",
+          fields: [
+            {
+              widget: "select",
+              path: "commandAccess",
+              label: "ADMIN_F_ACCESS",
+              hint: "ADMIN_H_ACCESS",
+              options: [
+                { value: "admins", label: "ADMIN_O_ADMINS" },
+                { value: "everyone", label: "ADMIN_O_EVERYONE" },
+              ],
+            },
+          ],
+        },
         {
           icon: "triangle-exclamation",
           title: "ADMIN_C_LIMITS",
@@ -121,6 +153,67 @@ export const schema: PanelSchema = {
               max: 300,
               step: 10,
               unit: "m",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "players",
+      file: "players",
+      icon: "users",
+      label: "ADMIN_TAB_PLAYERS",
+      desc: "ADMIN_TAB_PLAYERS_DESC",
+      cards: [],
+      table: {
+        sort: "name",
+        columns: [
+          { path: "id", label: "ADMIN_COL_ID", width: 0.6, mono: true },
+          { path: "name", label: "ADMIN_COL_NAME", width: 2 },
+          { path: "height", label: "ADMIN_COL_HEIGHT", mono: true },
+          { path: "width", label: "ADMIN_COL_WIDTH", mono: true },
+        ],
+      },
+    },
+    {
+      id: "edit",
+      file: "edit",
+      icon: "user",
+      label: "ADMIN_TAB_EDIT",
+      desc: "ADMIN_TAB_EDIT_DESC",
+      cards: [
+        {
+          icon: "user",
+          title: "ADMIN_C_EDIT",
+          desc: "ADMIN_C_EDIT_DESC",
+          fields: [
+            {
+              widget: "text",
+              path: "player",
+              lookup: "player",
+              label: "ADMIN_F_PLAYER",
+              hint: "ADMIN_H_PLAYER",
+              placeholder: "ADMIN_P_PLAYER",
+            },
+            {
+              widget: "number",
+              path: "height",
+              label: "ADMIN_F_HEIGHT",
+              hint: "ADMIN_H_HEIGHT",
+              min: 0.5,
+              max: 1.5,
+              step: 0.01,
+              unit: "x",
+            },
+            {
+              widget: "number",
+              path: "width",
+              label: "ADMIN_F_WIDTH",
+              hint: "ADMIN_H_WIDTH",
+              min: 0.5,
+              max: 1.5,
+              step: 0.01,
+              unit: "x",
             },
           ],
         },

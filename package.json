@@ -5,7 +5,7 @@
   "description": "Character height and width from the admin panel",
   "license": "GPL-3.0-only",
   "author": {
-    "name": "ai-core"
+    "name": "TGIANN"
   },
   "repository": "github:TGIANN/ai-pedscale",
   "type": "module",
@@ -36,5 +36,8 @@
     "oxlint": "^1.66.0",
     "tsdown": "^0.22.0",
     "typescript": "^6.0.3"
-  }
+  },
+  "fxFiles": [
+    "data/settings.json"
+  ]
 }

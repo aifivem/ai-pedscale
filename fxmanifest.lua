@@ -1,6 +1,6 @@
 name 'ai-pedscale'
 author 'TGIANN'
-version '0.1.0'
+version '0.1.0' -- x-release-please-version
 license 'GPL-3.0-only'
 description 'Character height and width from the admin panel'
 repository 'https://github.com/aifivem/ai-pedscale'

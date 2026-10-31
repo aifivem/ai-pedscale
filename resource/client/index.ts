@@ -2,6 +2,7 @@ import {
   AdminWorld,
   cache,
   every,
+  playerPed,
   PlayerState,
   TickLoop,
 } from "@aicore-fivem/lib/client";
@@ -58,7 +59,7 @@ function findNear(): void {
   near.length = 0;
   const [x = 0, y = 0, z = 0] = GetEntityCoords(cache.ped, false);
   for (const [serverId, scale] of scaled) {
-    const ped = GetPlayerPed(GetPlayerFromServerId(serverId));
+    const ped = playerPed(serverId);
     if (!ped || !DoesEntityExist(ped)) continue;
     const [px = 0, py = 0, pz = 0] = GetEntityCoords(ped, false);
     if (Math.hypot(px - x, py - y, pz - z) >= view.value.drawDistance) continue;

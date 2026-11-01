@@ -17,4 +17,4 @@ Character height and width set by admins (panel tab "Change a size", `/setheight
 
 ## Entry points
 
-- Server: commands `resource/server/index.ts`; sizes, panel list and form `server/sizes.ts`; panel `server/schema.ts`. Client: drawing `resource/client/index.ts`.
+- Server: commands `resource/server/commands.ts`; panel, settings and the sizes store `server/content.ts`; character load / unload `server/characters.ts`; sizes, panel list and form `server/sizes.ts`; panel `server/schema/`. Client: drawing `resource/client/draw.ts`.

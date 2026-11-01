@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/aifivem/ai-pedscale/compare/v0.1.2...v0.1.3) (2026-11-01)
+
+
+### Code Refactoring
+
+* feature folders, side entries that only import, panel schema per tab ([dea4b2a](https://github.com/aifivem/ai-pedscale/commit/dea4b2a5aeb0e2774b34fd32b20bd63c7643f572))
+
 ## [0.1.2](https://github.com/aifivem/ai-pedscale/compare/v0.1.1...v0.1.2) (2026-10-31)
 
 

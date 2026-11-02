@@ -1,4 +1,4 @@
-import type { PanelSchema } from "@aicore-fivem/shared";
+import type { PanelSchema } from "@aifivem/shared";
 import { editFile, editTab } from "./edit";
 import { playersFile, playersTab } from "./players";
 import { settingsFile, settingsTab } from "./settings";

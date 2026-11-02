@@ -1,4 +1,4 @@
-import type { FileSpec, TabSpec } from "@aicore-fivem/shared";
+import type { FileSpec, TabSpec } from "@aifivem/shared";
 import { range } from "./range";
 
 /** The "Change a size" form: picking a player loads their size, a changed number applies at once. */

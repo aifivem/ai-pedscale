@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/aifivem/ai-pedscale/compare/v0.1.4...v0.1.5) (2026-11-02)
+
+
+### Documentation
+
+* install from the release zip ([08c3cfd](https://github.com/aifivem/ai-pedscale/commit/08c3cfd3df2a5064c959c177e2c84f95c270f756))
+
+
+### Miscellaneous Chores
+
+* build files are no longer in git, the release zip carries them ([2f81c1a](https://github.com/aifivem/ai-pedscale/commit/2f81c1a2b31187cd0a265ad9d69373e9aed52616))
+
 ## [0.1.4](https://github.com/aifivem/ai-pedscale/compare/v0.1.3...v0.1.4) (2026-11-02)
 
 

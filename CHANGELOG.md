@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/aifivem/ai-pedscale/compare/v0.1.3...v0.1.4) (2026-11-02)
+
+
+### Code Refactoring
+
+* import the shared packages from [@aifivem](https://github.com/aifivem) ([2df7d95](https://github.com/aifivem/ai-pedscale/commit/2df7d95866eb8730ba795e4413a87f7c3254ba04))
+
 ## [0.1.3](https://github.com/aifivem/ai-pedscale/compare/v0.1.2...v0.1.3) (2026-11-01)
 
 
